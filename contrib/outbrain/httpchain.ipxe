@@ -1,0 +1,6 @@
+#!ipxe
+:retry_dhcp
+dhcp && isset ${net0/ip} || goto :retry_dhcp
+
+:boot
+chain http://192.168.82.226/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid}
