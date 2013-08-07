@@ -5,3 +5,5 @@ Quick start guide:
    # read the Makefile for the one-liner that does all the things, then run
    $> make
 
+   # produces the following file which you should boot from and win at:
+   ./src/bin/undionly.kpxe
