@@ -2,7 +2,6 @@ iPXE README File
 
 Quick start guide:
 
-   cd src
-   make
+   # read the Makefile for the one-liner that does all the things, then run
+   $> make
 
-For any more detailed instructions, see http://ipxe.org
