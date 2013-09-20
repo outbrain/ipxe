@@ -1,6 +1,8 @@
 #!ipxe
+set use-cached 1
+
 :retry_dhcp
-dhcp && isset ${net0/ip} || goto :retry_dhcp
+dhcp || goto :retry_dhcp
 
 :boot
 chain http://onering.outbrain.com/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid}

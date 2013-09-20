@@ -1,3 +1,3 @@
 all:
-	cd src && make bin/undionly.kpxe EMBED=../contrib/outbrain/httpchain.ipxe
+	cd src && make bin/undionly.kkpxe EMBED=../contrib/outbrain/httpchain.ipxe
 
