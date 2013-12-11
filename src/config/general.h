@@ -161,4 +161,11 @@ FILE_LICENCE ( GPL2_OR_LATER );
 
 #include <config/local/general.h>
 
+#define PING_CMD        /* Ping command */
+#define PCI_CMD        /* PCI commands */
+#define VLAN_CMD        /* VLAN commands */
+#define TIME_CMD        /* Time command */
+#define NSLOOKUP_CMD        /* Name resolution command */
+
+
 #endif /* CONFIG_GENERAL_H */

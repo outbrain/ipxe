@@ -1,3 +1,9 @@
-all:
-	cd src && make bin/undionly.kkpxe EMBED=../contrib/outbrain/httpchain.ipxe
+default:
+	./build.sh all
 
+push:
+	./build.sh push
+
+all:
+	./build.sh all
+	./build.sh push

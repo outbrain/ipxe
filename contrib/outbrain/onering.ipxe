@@ -1,5 +1,6 @@
 #!ipxe
 set use-cached 1
+set onering-server {{ONERING_SERVER}}
 set menu-timeout 3000
 set menu-default onering
 
@@ -53,5 +54,5 @@ goto menu
 goto menu
 
 :onering
-chain http://onering.outbrain.com/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid}
+chain http://${onering-server}/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid}
 goto menu
