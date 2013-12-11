@@ -35,9 +35,9 @@ FILE_LICENCE ( GPL2_OR_LATER );
 #include <ipxe/shell.h>
 #include <ipxe/features.h>
 #include <ipxe/image.h>
+#include <ipxe/timer.h>
 #include <usr/ifmgmt.h>
 #include <usr/route.h>
-#include <usr/dhcpmgmt.h>
 #include <usr/imgmgmt.h>
 #include <usr/prompt.h>
 #include <usr/autoboot.h>
@@ -59,7 +59,7 @@ FILE_LICENCE ( GPL2_OR_LATER );
 #define CYAN	"\033[36m"
 
 /** The "scriptlet" setting */
-struct setting scriptlet_setting __setting ( SETTING_MISC ) = {
+const struct setting scriptlet_setting __setting ( SETTING_MISC, scriptlet ) = {
 	.name = "scriptlet",
 	.description = "Boot scriptlet",
 	.tag = DHCP_EB_SCRIPTLET,
@@ -119,7 +119,8 @@ static struct uri * parse_next_server_and_filename ( struct in_addr next_server,
 }
 
 /** The "keep-san" setting */
-struct setting keep_san_setting __setting ( SETTING_SANBOOT_EXTRA ) = {
+const struct setting keep_san_setting __setting ( SETTING_SANBOOT_EXTRA,
+						  keep-san ) = {
 	.name = "keep-san",
 	.description = "Preserve SAN connection",
 	.tag = DHCP_EB_KEEP_SAN,
@@ -127,7 +128,8 @@ struct setting keep_san_setting __setting ( SETTING_SANBOOT_EXTRA ) = {
 };
 
 /** The "skip-san-boot" setting */
-struct setting skip_san_boot_setting __setting ( SETTING_SANBOOT_EXTRA ) = {
+const struct setting skip_san_boot_setting __setting ( SETTING_SANBOOT_EXTRA,
+						       skip-san-boot ) = {
 	.name = "skip-san-boot",
 	.description = "Do not boot from SAN device",
 	.tag = DHCP_EB_SKIP_SAN_BOOT,
@@ -251,31 +253,40 @@ static void close_all_netdevs ( void ) {
  * @ret uri		URI, or NULL on failure
  */
 struct uri * fetch_next_server_and_filename ( struct settings *settings ) {
-	struct in_addr next_server;
-	char buf[256];
+	struct in_addr next_server = { 0 };
+	char *raw_filename = NULL;
+	struct uri *uri = NULL;
 	char *filename;
-	struct uri *uri;
 
-	/* Fetch next-server setting */
-	fetch_ipv4_setting ( settings, &next_server_setting, &next_server );
-	if ( next_server.s_addr )
-		printf ( "Next server: %s\n", inet_ntoa ( next_server ) );
-
-	/* Fetch filename setting */
-	fetch_string_setting ( settings, &filename_setting,
-			       buf, sizeof ( buf ) );
-	if ( buf[0] )
-		printf ( "Filename: %s\n", buf );
+	/* If we have a filename, fetch it along with the next-server
+	 * setting from the same settings block.
+	 */
+	if ( fetch_setting ( settings, &filename_setting, &settings,
+			     NULL, NULL, 0 ) >= 0 ) {
+		fetch_string_setting_copy ( settings, &filename_setting,
+					    &raw_filename );
+		fetch_ipv4_setting ( settings, &next_server_setting,
+				     &next_server );
+	}
 
 	/* Expand filename setting */
-	filename = expand_settings ( buf );
+	filename = expand_settings ( raw_filename ? raw_filename : "" );
 	if ( ! filename )
-		return NULL;
+		goto err_expand;
 
 	/* Parse next server and filename */
+	if ( next_server.s_addr )
+		printf ( "Next server: %s\n", inet_ntoa ( next_server ) );
+	if ( filename[0] )
+		printf ( "Filename: %s\n", filename );
 	uri = parse_next_server_and_filename ( next_server, filename );
+	if ( ! uri )
+		goto err_parse;
 
+ err_parse:
 	free ( filename );
+ err_expand:
+	free ( raw_filename );
 	return uri;
 }
 
@@ -286,25 +297,30 @@ struct uri * fetch_next_server_and_filename ( struct settings *settings ) {
  * @ret uri		URI, or NULL on failure
  */
 static struct uri * fetch_root_path ( struct settings *settings ) {
-	char buf[256];
+	struct uri *uri = NULL;
+	char *raw_root_path;
 	char *root_path;
-	struct uri *uri;
 
 	/* Fetch root-path setting */
-	fetch_string_setting ( settings, &root_path_setting,
-			       buf, sizeof ( buf ) );
-	if ( buf[0] )
-		printf ( "Root path: %s\n", buf );
+	fetch_string_setting_copy ( settings, &root_path_setting,
+				    &raw_root_path );
 
 	/* Expand filename setting */
-	root_path = expand_settings ( buf );
+	root_path = expand_settings ( raw_root_path ? raw_root_path : "" );
 	if ( ! root_path )
-		return NULL;
+		goto err_expand;
 
 	/* Parse root path */
+	if ( root_path[0] )
+		printf ( "Root path: %s\n", root_path );
 	uri = parse_uri ( root_path );
+	if ( ! uri )
+		goto err_parse;
 
+ err_parse:
 	free ( root_path );
+ err_expand:
+	free ( raw_root_path );
 	return uri;
 }
 
@@ -320,7 +336,7 @@ static int have_pxe_menu ( void ) {
 		= { .tag = DHCP_PXE_DISCOVERY_CONTROL };
 	struct setting pxe_boot_menu_setting
 		= { .tag = DHCP_PXE_BOOT_MENU };
-	char buf[256];
+	char buf[ 10 /* "PXEClient" + NUL */ ];
 	unsigned int pxe_discovery_control;
 
 	fetch_string_setting ( NULL, &vendor_class_id_setting,
@@ -353,8 +369,8 @@ int netboot ( struct net_device *netdev ) {
 		goto err_ifopen;
 	ifstat ( netdev );
 
-	/* Configure device via DHCP */
-	if ( ( rc = dhcp ( netdev ) ) != 0 )
+	/* Configure device */
+	if ( ( rc = ifconf ( netdev, NULL ) ) != 0 )
 		goto err_dhcp;
 	route();
 
@@ -457,7 +473,8 @@ static int shell_banner ( void ) {
 	/* Prompt user */
 	printf ( "\n" );
 	return ( prompt ( "Press Ctrl-B for the iPXE command line...",
-			  ( BANNER_TIMEOUT * 100 ), CTRL_B ) == 0 );
+			  ( ( BANNER_TIMEOUT * TICKS_PER_SEC ) / 10 ),
+			  CTRL_B ) == 0 );
 }
 
 /**

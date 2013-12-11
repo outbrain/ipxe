@@ -500,6 +500,11 @@ CFLAGS		+= $(FS_FLAGS) $(DS_FLAGS)
 endif
 LDFLAGS		+= --gc-sections
 
+# Force creation of static binaries (required for OpenBSD, does no
+# harm on other platforms).
+#
+LDFLAGS		+= -static
+
 # compiler.h is needed for our linking and debugging system
 #
 CFLAGS		+= -include include/compiler.h
@@ -1011,15 +1016,20 @@ $(BIN)/%.nodeps : $(BIN)/%.tmp
 # Get licensing verdict for the specified target
 #
 define licensable_deps_list
-	$(filter-out config/local/%.h,$(call deps_list,$(1)))
+	$(filter-out config/local/%.h,\
+	  $(filter-out $(BIN)/.%.list,\
+	    $(call deps_list,$(1))))
 endef
 define unlicensed_deps_list
 	$(shell grep -L FILE_LICENCE $(call licensable_deps_list,$(1)))
 endef
 define licence_list
-	$(patsubst __licence_%,%,\
-	  $(filter __licence_%,$(shell $(NM) $(1) | cut -d" " -f3)))
+	$(sort $(foreach LICENCE,\
+		 $(filter __licence__%,$(shell $(NM) $(1) | cut -d" " -f3)),\
+		 $(word 2,$(subst __, ,$(LICENCE)))))
 endef
+$(BIN)/%.licence_list : $(BIN)/%.tmp
+	$(Q)$(ECHO) $(call licence_list,$<)
 $(BIN)/%.licence : $(BIN)/%.tmp
 	$(QM)$(ECHO) "  [LICENCE] $@"
 	$(Q)$(if $(strip $(call unlicensed_deps_list,$<)),\
