@@ -1,7 +1,7 @@
 [ -d log ] || mkdir log
 [ -d tmp ] || mkdir tmp
 EMBED_TPL="$(dirname $0)/../contrib/outbrain/onering.ipxe"
-BUILDBIN="undionly.kkpxe"
+BUILDBIN="undionly.kpxe"
 
 case $1 in
 all)
