@@ -1,0 +1,57 @@
+#!ipxe
+set use-cached 1
+set menu-timeout 3000
+set menu-default onering
+
+:retry_dhcp
+dhcp || goto :retry_dhcp
+
+:menu
+menu iPXE Diagnostic Image
+item --gap --                       Model ................. ${smbios/manufacturer} ${smbios/product}
+item --gap --                       Current IP ............ ${net0/ip}
+item --gap --                       Netmask ............... ${net0/netmask}
+item --gap --                       Gateway ............... ${net0/gateway}
+item --gap --                       MAC Address ........... ${net0/mac}
+item --gap --
+item --key o  onering               Chainload Onering Configuration
+item --gap --
+item reboot                         Reboot system
+item --key c  config                Configure settings
+item shell                          Drop to iPXE shell
+item --key x  exit                  Exit iPXE
+item --gap --
+
+choose --timeout ${menu-timeout} --default ${menu-default} selected || goto cancel
+set menu-timeout 0
+goto ${selected}
+
+:cancel
+echo You cancelled the menu, dropping you to a shell
+
+:shell
+echo Type exit to get the back to the menu
+shell
+set menu-timeout 0
+goto menu
+
+:failed
+echo Booting failed
+goto init
+
+:reboot
+reboot
+
+:exit
+exit
+
+:config
+config
+goto menu
+
+:back
+goto menu
+
+:onering
+chain http://onering.outbrain.com/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid}
+goto menu
