@@ -67,18 +67,18 @@ FILE_LICENCE ( GPL2_OR_LATER );
  *
  */
 
-//#undef	SANBOOT_PROTO_ISCSI	/* iSCSI protocol */
-//#undef	SANBOOT_PROTO_AOE	/* AoE protocol */
-//#undef	SANBOOT_PROTO_IB_SRP	/* Infiniband SCSI RDMA protocol */
-//#undef	SANBOOT_PROTO_FCP	/* Fibre Channel protocol */
+#undef	SANBOOT_PROTO_ISCSI	/* iSCSI protocol */
+#undef	SANBOOT_PROTO_AOE	/* AoE protocol */
+#undef	SANBOOT_PROTO_IB_SRP	/* Infiniband SCSI RDMA protocol */
+#undef	SANBOOT_PROTO_FCP	/* Fibre Channel protocol */
 
 /*
  * 802.11 cryptosystems and handshaking protocols
  *
  */
-#define	CRYPTO_80211_WEP	/* WEP encryption (deprecated and insecure!) */
-#define	CRYPTO_80211_WPA	/* WPA Personal, authenticating with passphrase */
-#define	CRYPTO_80211_WPA2	/* Add support for stronger WPA cryptography */
+#undef	CRYPTO_80211_WEP	/* WEP encryption (deprecated and insecure!) */
+#undef	CRYPTO_80211_WPA	/* WPA Personal, authenticating with passphrase */
+#undef	CRYPTO_80211_WPA2	/* Add support for stronger WPA cryptography */
 
 /*
  * Name resolution modules
@@ -113,8 +113,8 @@ FILE_LICENCE ( GPL2_OR_LATER );
 #define	NVO_CMD			/* Non-volatile option storage commands */
 #define	CONFIG_CMD		/* Option configuration console */
 #define	IFMGMT_CMD		/* Interface management commands */
-#define	IWMGMT_CMD		/* Wireless interface management commands */
-#define FCMGMT_CMD		/* Fibre Channel management commands */
+#undef	IWMGMT_CMD		/* Wireless interface management commands */
+#undef  FCMGMT_CMD		/* Fibre Channel management commands */
 #define	ROUTE_CMD		/* Routing table management commands */
 #define IMAGE_CMD		/* Image management commands */
 #define DHCP_CMD		/* DHCP management commands */
@@ -169,12 +169,5 @@ FILE_LICENCE ( GPL2_OR_LATER );
 				 * (both may be set) */
 
 #include <config/local/general.h>
-
-#define PING_CMD        /* Ping command */
-#define PCI_CMD        /* PCI commands */
-#define VLAN_CMD        /* VLAN commands */
-#define TIME_CMD        /* Time command */
-#define NSLOOKUP_CMD        /* Name resolution command */
-
 
 #endif /* CONFIG_GENERAL_H */

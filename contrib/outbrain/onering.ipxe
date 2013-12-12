@@ -1,11 +1,17 @@
 #!ipxe
 :init
+
 set onering-server {{ONERING_SERVER}}
 set menu-default onering
+set max-attempts   5
+set attempts:int32 0
+set use-cached 1
 
-:retry_dhcp
-echo Obtaining address...
-dhcp || goto retry_dhcp
+#:retry_dhcp
+#iseq ${attempts} ${max-attempts} && goto reboot ||
+#inc attempts
+#echo Obtaining address...
+#dhcp || goto retry_dhcp
 
 :menu
 set menu-timeout 3000
@@ -42,6 +48,7 @@ echo Boot failed
 goto init
 
 :reboot
+echo Rebooting system...
 reboot
 
 :exit
@@ -55,4 +62,10 @@ goto start
 goto start
 
 :onering
-chain http://${onering-server}/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid} || goto failed
+set max-attempts   5
+set attempts:int32 0
+
+:oneringchain
+iseq ${attempts} ${max-attempts} && goto reboot ||
+inc attempts
+chain http://${onering-server}/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid} || goto oneringchain
