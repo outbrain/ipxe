@@ -1,13 +1,16 @@
 #!ipxe
-set use-cached 1
+:init
 set onering-server {{ONERING_SERVER}}
-set menu-timeout 3000
 set menu-default onering
 
 :retry_dhcp
-dhcp || goto :retry_dhcp
+echo Obtaining address...
+dhcp || goto retry_dhcp
 
 :menu
+set menu-timeout 3000
+
+:start
 menu iPXE Diagnostic Image
 item --gap --                       Model ................. ${smbios/manufacturer} ${smbios/product}
 item --gap --                       Current IP ............ ${net0/ip}
@@ -24,7 +27,6 @@ item --key x  exit                  Exit iPXE
 item --gap --
 
 choose --timeout ${menu-timeout} --default ${menu-default} selected || goto cancel
-set menu-timeout 0
 goto ${selected}
 
 :cancel
@@ -33,11 +35,10 @@ echo You cancelled the menu, dropping you to a shell
 :shell
 echo Type exit to get the back to the menu
 shell
-set menu-timeout 0
-goto menu
+goto start
 
 :failed
-echo Booting failed
+echo Boot failed
 goto init
 
 :reboot
@@ -48,11 +49,10 @@ exit
 
 :config
 config
-goto menu
+goto start
 
 :back
-goto menu
+goto start
 
 :onering
-chain http://${onering-server}/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid}
-goto menu
+chain http://${onering-server}/api/ipxe/boot?mac=${net0/mac}&uuid=${smbios/uuid} || goto failed
